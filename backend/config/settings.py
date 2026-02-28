@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 import os
 
@@ -35,23 +36,30 @@ ALLOWED_HOSTS = []
 
 # Override basic settings from environment when available
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", SECRET_KEY)
-DEBUG = os.getenv("DJANGO_DEBUG", str(DEBUG)).lower() == "true"
-allowed_hosts_env = os.getenv("DJANGO_ALLOWED_HOSTS")
-if allowed_hosts_env:
-    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(",") if host.strip()]
+DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() in ("true", "1", "yes")
+ALLOWED_HOSTS = [
+    h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if h.strip()
+]
+
+# Cookie security (set True in production over HTTPS)
+SECURE_COOKIE = os.getenv("SECURE_COOKIE", "false").lower() in ("true", "1", "yes")
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework',
-    'corsheaders',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "corsheaders",
+    "categories",
+    "notes",
+    "users",
 ]
 
 MIDDLEWARE = [
@@ -88,12 +96,25 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+_db_name = os.getenv("DB_NAME")
+if _db_name:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": _db_name,
+            "USER": os.getenv("DB_USER", ""),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", ""),
+            "PORT": os.getenv("DB_PORT", "5432"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation
@@ -139,14 +160,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # CORS configuration for local frontend
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
 CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = ["http://localhost:3000"]
 
 
 # Django REST framework configuration
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
-    "DEFAULT_PERMISSION_CLASSES": [],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["users.authentication.CookieJWTAuthentication"],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+}
+
+# SimpleJWT
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }

@@ -84,6 +84,27 @@ class TestNotesList:
         assert response.status_code == 400
         assert "category" in response.data
 
+    def test_notes_filter_by_favorite_returns_only_matching_notes(
+        self, auth_client, user1
+    ):
+        cat1 = create_category(user1, "Cat1", "#F00")
+        create_note(user1, cat1, "N1", "", True)
+        create_note(user1, cat1, "N2", "")
+        create_note(user1, cat1, "N3", "")
+
+        response = auth_client.get(f"/api/notes/?favorite=True")
+        assert response.status_code == 200
+        titles = [n["title"] for n in response.data]
+        assert "N2" not in titles and "N3" not in titles
+        assert "N1" in titles
+
+    def test_notes_filter_invalid_favorite_string_returns_400(
+        self, auth_client
+    ):
+        response = auth_client.get("/api/notes/?favorite=any")
+        assert response.status_code == 400
+        assert "favorite" in response.data
+
 
 @pytest.mark.django_db
 class TestNoteDetail:

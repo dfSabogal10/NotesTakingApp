@@ -20,6 +20,7 @@ type Note = {
   id: number;
   title: string;
   content: string;
+  favorite: boolean;
   category: { id: number; name: string; color_hex: string };
   updated_at: string;
 };
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
+  const [favoritesSelected, setFavoritesSelected] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [creatingNote, setCreatingNote] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -45,6 +47,12 @@ export default function DashboardPage() {
       setLoading(false);
     }
   };
+
+  const fetchFilteredNotes = async (byFavorite: boolean=false)=>{
+    const searchPath = byFavorite ?`/api/notes?favorite=True`:`/api/notes?category=${selectedCategoryId}`
+    const notesFilteredResponse = await api.get<Note[]>(searchPath);
+    setNotes(notesFilteredResponse ?? []);
+  }
 
   useEffect(() => {
     fetchData();
@@ -75,11 +83,16 @@ export default function DashboardPage() {
       setLoggingOut(false);
     }
   };
-
-  const filteredNotes =
-    selectedCategoryId === "all"
-      ? notes
-      : notes.filter((n) => n.category.id === selectedCategoryId);
+  useEffect(()=>{
+    fetchFilteredNotes();
+  },[selectedCategoryId])
+  useEffect(()=>{
+    fetchFilteredNotes(true);
+  },[favoritesSelected])
+  // const filteredNotes =
+  //   selectedCategoryId === "all"
+  //     ? notes
+  //     : notes.filter((n) => n.category.id === selectedCategoryId);
 
   return (
     <AuthGuard>
@@ -101,6 +114,15 @@ export default function DashboardPage() {
             >
               <h2 className="text-xl font-bold text-black">
                 All Categories
+              </h2>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFavoritesSelected(!favoritesSelected)}
+              className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left text-base font-normal text-black transition-colors`}
+            >
+              <h2 className="text-xl font-bold text-black">
+                Favorites
               </h2>
             </button>
             {categories.map((cat) => (
@@ -142,7 +164,7 @@ export default function DashboardPage() {
             <div className="flex flex-1 items-center justify-center">
               <div className="h-8 w-8 animate-pulse rounded-full bg-[var(--sepia-light)]/30" />
             </div>
-          ) : filteredNotes.length === 0 ? (
+          ) : notes.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-8">
               <div className="relative h-80 w-80">
                 <Image
@@ -158,7 +180,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredNotes.map((note) => (
+              {notes.map((note) => (
                 <NoteCard key={note.id} note={note} />
               ))}
             </div>

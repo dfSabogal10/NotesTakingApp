@@ -25,9 +25,10 @@ def create_note(
     category: Category,
     title: str = "",
     content: str = "",
+    favorite: bool = False,
 ) -> Note:
     """Create a note for the given user and category."""
-    return Note.objects.create(user=user, category=category, title=title, content=content)
+    return Note.objects.create(user=user, category=category, title=title, content=content, favorite=favorite)
 
 
 def login(client: APIClient, email: str, password: str):

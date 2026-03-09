@@ -1,9 +1,9 @@
-from django.urls import path
+from rest_framework.routers import DefaultRouter
 
-from categories.views import CategoryListView
+from categories.views import CategoryViewSet
 
 app_name = "categories"
 
-urlpatterns = [
-    path("", CategoryListView.as_view(), name="list"),
-]
+router = DefaultRouter()
+router.register(r"", CategoryViewSet, basename="category")
+urlpatterns = router.urls

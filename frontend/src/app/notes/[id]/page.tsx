@@ -18,6 +18,7 @@ type Note = {
   id: number;
   title: string;
   content: string;
+  favorite: boolean;
   category: { id: number; name: string; color_hex: string };
   updated_at: string;
 };
@@ -30,6 +31,7 @@ export default function NoteEditorPage() {
   const noteId = id ? parseInt(id, 10) : NaN;
 
   const [note, setNote] = useState<Note | null>(null);
+  const [favorite, setFavorite] = useState<boolean> (false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -77,6 +79,17 @@ export default function NoteEditorPage() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
+  const patchFavorite = async ()=>{
+    try {
+      const res = await api.patch<Note>(`/api/notes/${noteId}/`, {favorite});
+      if (res?.updated_at) setUpdatedAt(res.updated_at);
+    } catch {
+      // Restore pending on error; optional: show toast
+    }
+  }
+  useEffect(()=> {
+    patchFavorite();
+  },[favorite])
 
   useEffect(() => {
     if (Number.isNaN(noteId)) {
@@ -94,6 +107,7 @@ export default function NoteEditorPage() {
           api.get<Category[]>("/api/categories/"),
         ]);
         setNote(noteRes);
+        setFavorite(noteRes?.favorite ?? false);
         setCategories(catsRes ?? []);
         setTitle(noteRes?.title ?? "");
         setContent(noteRes?.content ?? "");
@@ -138,6 +152,12 @@ export default function NoteEditorPage() {
               open={dropdownOpen}
               onOpenChange={setDropdownOpen}
             />
+            <button
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-xl font-medium text-black hover:border-black/40"
+              onClick={() => setFavorite(!favorite)}
+            >
+              {favorite ? "remove favorite": "add as favorite"}
+            </button>
             <Link
               href="/"
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-transparent text-xl font-medium text-black hover:border-black/40"

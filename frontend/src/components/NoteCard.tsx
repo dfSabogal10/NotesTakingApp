@@ -8,6 +8,7 @@ type NoteCardProps = {
     id: number;
     title: string;
     content: string;
+    favorite: boolean;
     category: { id: number; name: string; color_hex: string };
     updated_at: string;
   };
@@ -21,6 +22,9 @@ export function NoteCard({ note }: NoteCardProps) {
       className="block rounded-xl p-6 min-h-80 shadow transition-shadow hover:shadow-md"
       style={{ backgroundColor: catColor }}
     >
+      <div className="mb-3 flex items-center justify-between text-sm text-black">
+        <span className="font-bold">{note.favorite && "Favorite"}</span>
+      </div>
       <div className="mb-3 flex items-center justify-between text-sm text-black">
         <span>{formatLastEdited(note.updated_at)}</span>
         <span className="font-medium">{note.category?.name ?? ""}</span>

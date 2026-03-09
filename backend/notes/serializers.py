@@ -26,7 +26,7 @@ class NoteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Note
-        fields = ["id", "title", "content", "category", "category_id", "updated_at"]
+        fields = ["id", "title", "content", "category", "favorite", "category_id", "updated_at"]
         read_only_fields = ["id", "updated_at"]
 
     def __init__(self, *args, **kwargs):
